@@ -87,10 +87,9 @@ integers = 0 :> iconcat (imap (\x -> [x, negate x]) (iiterate (+1) 1))
 
 
 
--- A utility to convert a regular list to an InfiniteList
-fromList :: [a] -> InfiniteList a
-fromList [] = error "Cannot convert an empty list to an InfiniteList"
-fromList (x:xs) = x :> fromList xs
+fromListToInfinity :: [a] -> InfiniteList a
+fromListToInfinity [] = error "Cannot convert an empty list to an InfiniteList"
+fromListToInfinity (x:xs) = x :> fromListToInfinity xs
 
 igcd :: Integer -> Integer -> Integer
 igcd a 0 = abs a
@@ -98,7 +97,7 @@ igcd a b = igcd b (a `mod` b)
 
 -- Generate all pairs of integers (m, n) where n != 0
 allPairs :: InfiniteList (Integer, Integer)
-allPairs = fromList [(m, n) | n <- [1..], m <- [-(n+20)..n+20], n /= 0]
+allPairs = fromListToInfinity [(m, n) | n <- [1..], m <- [-(n+20)..n+20], n /= 0]
 
 -- Create an infinite list of all rational numbers
 rationals :: InfiniteList Rational
