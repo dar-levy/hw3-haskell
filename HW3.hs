@@ -76,7 +76,8 @@ ifind :: (a -> Bool) -> InfiniteList a -> a
 ifind predicate (x :> xs) = if predicate x then x else ifind predicate xs
 
 iconcat :: InfiniteList [a] -> InfiniteList a
-iconcat = undefined
+iconcat (xs :> xss) = iprepend xs (iconcat xss)
+
 integers :: InfiniteList Integer
 integers = undefined
 rationals :: InfiniteList Rational
