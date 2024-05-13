@@ -20,9 +20,20 @@ import Text.Read (readMaybe)
 -- Section 1: Tree Serialization
 data Tree a = Empty | Tree (Tree a) a (Tree a) deriving (Show, Eq)
 serialize :: Tree Int -> [Int]
-serialize = undefined
+serialize Empty = [-1]
+serialize (Tree left x right) = [x] ++ serialize left ++ serialize right
+
 deserialize :: [Int] -> Tree Int
-deserialize = undefined
+deserialize [] = Empty
+            deserialize list = fst (deserialize' list)
+                          where
+                            deserialize' :: [Int] -> (Tree Int, [Int])
+                            deserialize' (-1 : xs) = (Empty, xs)
+                            deserialize' (x : xs) =
+                              let (left, rest) = deserialize' xs
+                                  (right, rest') = deserialize' rest
+                              in (Tree left x right, rest')
+                            deserialize' [] = error "deserialize' called with an empty list"
 
 -- Section 2: Infinite lists
 data InfiniteList a = a :> InfiniteList a
