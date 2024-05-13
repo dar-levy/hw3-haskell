@@ -52,13 +52,17 @@ irepeat :: a -> InfiniteList a
 irepeat x = x :> irepeat x
 
 iprepend :: [a] -> InfiniteList a -> InfiniteList a
-iprepend = undefined
+iprepend [] il = il
+iprepend (x:xs) il = x :> iprepend xs il
+
 itake :: Integer -> InfiniteList a -> [a]
 itake = undefined
 idrop :: Integer -> InfiniteList a -> InfiniteList a
 idrop = undefined
+
 naturals :: InfiniteList Integer
-naturals = undefined
+naturals = iiterate (+1) 0
+
 imap :: (a -> b) -> InfiniteList a -> InfiniteList b
 imap = undefined
 ifilter :: (a -> Bool) -> InfiniteList a -> InfiniteList a
