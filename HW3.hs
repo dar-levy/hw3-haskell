@@ -25,15 +25,15 @@ serialize (Tree left x right) = [x] ++ serialize left ++ serialize right
 
 deserialize :: [Int] -> Tree Int
 deserialize [] = Empty
-            deserialize list = fst (deserialize' list)
-                          where
-                            deserialize' :: [Int] -> (Tree Int, [Int])
-                            deserialize' (-1 : xs) = (Empty, xs)
-                            deserialize' (x : xs) =
-                              let (left, rest) = deserialize' xs
-                                  (right, rest') = deserialize' rest
-                              in (Tree left x right, rest')
-                            deserialize' [] = error "deserialize' called with an empty list"
+deserialize list = fst (deserialize' list)
+              where
+                deserialize' :: [Int] -> (Tree Int, [Int])
+                deserialize' (-1 : xs) = (Empty, xs)
+                deserialize' (x : xs) =
+                  let (left, rest) = deserialize' xs
+                      (right, rest') = deserialize' rest
+                  in (Tree left x right, rest')
+                deserialize' [] = error "deserialize' called with an empty list"
 
 -- Section 2: Infinite lists
 data InfiniteList a = a :> InfiniteList a
@@ -41,32 +41,50 @@ infixr 5 :>
 
 sample :: InfiniteList a -> [a]
 sample = take 10 . itoList
+
 itoList :: InfiniteList a -> [a]
-itoList = undefined
+itoList (x :> xs) = x : itoList xs
+
 iiterate :: (a -> a) -> a -> InfiniteList a
-iiterate = undefined
+iiterate f x = x :> iiterate f (f x)
+
 irepeat :: a -> InfiniteList a
-irepeat = undefined
+irepeat x = x :> irepeat x
+
 iprepend :: [a] -> InfiniteList a -> InfiniteList a
-iprepend = undefined
+iprepend [] il = il
+iprepend (x:xs) il = x :> iprepend xs il
+
 itake :: Integer -> InfiniteList a -> [a]
-itake = undefined
+itake n _ | n <= 0 = []
+itake n (x :> xs) = x : itake (n - 1) xs
+
 idrop :: Integer -> InfiniteList a -> InfiniteList a
-idrop = undefined
+idrop n il@(_ :> _) | n <= 0 = il
+idrop n (_ :> xs) = idrop (n - 1) xs
+
 naturals :: InfiniteList Integer
-naturals = undefined
+naturals = iiterate (+1) 0
+
 imap :: (a -> b) -> InfiniteList a -> InfiniteList b
-imap = undefined
+imap f (x :> xs) = f x :> imap f xs
+
 ifilter :: (a -> Bool) -> InfiniteList a -> InfiniteList a
-ifilter = undefined
+ifilter predicate (x :> xs) = if predicate x then x :> ifilter predicate xs else ifilter predicate xs
+
 ifind :: (a -> Bool) -> InfiniteList a -> a
-ifind = undefined
+ifind predicate (x :> xs) = if predicate x then x else ifind predicate xs
+
 iconcat :: InfiniteList [a] -> InfiniteList a
-iconcat = undefined
+iconcat (xs :> xss) = iprepend xs (iconcat xss)
+
 integers :: InfiniteList Integer
-integers = undefined
+integers = 0 :> iconcat (imap (\x -> [x, negate x]) (iiterate (+1) 1))
+
 rationals :: InfiniteList Rational
-rationals = undefined
+rationals = foldrRationals (iiterate (+1) 1) where
+            foldrRationals (n :> ns) = n % 1 :> (1 % n) :> foldrRationals ns
+
 -- Bonus: same as rationals, but without repeats!
 rationals' :: InfiniteList Rational
 rationals' = undefined
