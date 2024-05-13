@@ -56,7 +56,9 @@ iprepend [] il = il
 iprepend (x:xs) il = x :> iprepend xs il
 
 itake :: Integer -> InfiniteList a -> [a]
-itake = undefined
+itake n _ | n <= 0 = []
+itake n (x :> xs) = x : itake (n - 1) xs
+
 idrop :: Integer -> InfiniteList a -> InfiniteList a
 idrop = undefined
 
