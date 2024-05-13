@@ -67,7 +67,8 @@ naturals :: InfiniteList Integer
 naturals = iiterate (+1) 0
 
 imap :: (a -> b) -> InfiniteList a -> InfiniteList b
-imap = undefined
+imap f (x :> xs) = f x :> imap f xs
+
 ifilter :: (a -> Bool) -> InfiniteList a -> InfiniteList a
 ifilter = undefined
 ifind :: (a -> Bool) -> InfiniteList a -> a
