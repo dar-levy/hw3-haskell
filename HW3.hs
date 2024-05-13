@@ -79,9 +79,11 @@ iconcat :: InfiniteList [a] -> InfiniteList a
 iconcat (xs :> xss) = iprepend xs (iconcat xss)
 
 integers :: InfiniteList Integer
-integers = undefined
+integers = 0 :> iconcat (imap (\x -> [x, negate x]) (iiterate (+1) 1))
+
 rationals :: InfiniteList Rational
 rationals = undefined
+
 -- Bonus: same as rationals, but without repeats!
 rationals' :: InfiniteList Rational
 rationals' = undefined
