@@ -73,7 +73,8 @@ ifilter :: (a -> Bool) -> InfiniteList a -> InfiniteList a
 ifilter predicate (x :> xs) = if predicate x then x :> ifilter predicate xs else ifilter predicate xs
 
 ifind :: (a -> Bool) -> InfiniteList a -> a
-ifind = undefined
+ifind predicate (x :> xs) = if predicate x then x else ifind predicate xs
+
 iconcat :: InfiniteList [a] -> InfiniteList a
 iconcat = undefined
 integers :: InfiniteList Integer
