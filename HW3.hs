@@ -81,9 +81,35 @@ iconcat (xs :> xss) = iprepend xs (iconcat xss)
 integers :: InfiniteList Integer
 integers = 0 :> iconcat (imap (\x -> [x, negate x]) (iiterate (+1) 1))
 
+--rationals :: InfiniteList Rational
+--rationals = foldrRationals (iiterate (\ x -> x + 1 ) 1) where
+--            foldrRationals (n :> ns) = n % 1 :> (1 % n) :> foldrRationals ns
+
+
+
+-- A utility to convert a regular list to an InfiniteList
+fromList :: [a] -> InfiniteList a
+fromList [] = error "Cannot convert an empty list to an InfiniteList"
+fromList (x:xs) = x :> fromList xs
+
+igcd :: Integer -> Integer -> Integer
+igcd a 0 = abs a
+igcd a b = igcd b (a `mod` b)
+
+-- Generate all pairs of integers (m, n) where n != 0
+allPairs :: InfiniteList (Integer, Integer)
+allPairs = fromList [(m, n) | n <- [1..], m <- [-(n+20)..n+20], n /= 0]
+
+-- Create an infinite list of all rational numbers
 rationals :: InfiniteList Rational
-rationals = foldrRationals (iiterate (+1) 1) where
-            foldrRationals (n :> ns) = n % 1 :> (1 % n) :> foldrRationals ns
+rationals = normalizeRationals allPairs
+
+-- Normalize and ensure each rational is unique and reduced
+normalizeRationals :: InfiniteList (Integer, Integer) -> InfiniteList Rational
+normalizeRationals ((m, n) :> rest)
+  | igcd m n == 1 = (m % n) :> normalizeRationals rest
+  | otherwise    = normalizeRationals rest
+
 
 -- Bonus: same as rationals, but without repeats!
 rationals' :: InfiniteList Rational
