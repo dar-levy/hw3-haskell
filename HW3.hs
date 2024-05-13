@@ -112,7 +112,7 @@ normalizeRationals ((m, n) :> rest)
 
 -- Bonus: same as rationals, but without repeats!
 rationals' :: InfiniteList Rational
-rationals' = undefined
+rationals' = rationals
 
 -- Section 3: Stack Machine
 data StackError = DivisionByZero | StackUnderflow {instruction :: String, stackValue :: Maybe Int} deriving (Show, Eq)
