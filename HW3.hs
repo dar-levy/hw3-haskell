@@ -60,7 +60,8 @@ itake n _ | n <= 0 = []
 itake n (x :> xs) = x : itake (n - 1) xs
 
 idrop :: Integer -> InfiniteList a -> InfiniteList a
-idrop = undefined
+idrop n il@(_ :> _) | n <= 0 = il
+idrop n (_ :> xs) = idrop (n - 1) xs
 
 naturals :: InfiniteList Integer
 naturals = iiterate (+1) 0
