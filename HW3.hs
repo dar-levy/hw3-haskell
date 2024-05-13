@@ -82,7 +82,8 @@ integers :: InfiniteList Integer
 integers = 0 :> iconcat (imap (\x -> [x, negate x]) (iiterate (+1) 1))
 
 rationals :: InfiniteList Rational
-rationals = undefined
+rationals = foldrRationals (iiterate (+1) 1) where
+            foldrRationals (n :> ns) = n % 1 :> (1 % n) :> foldrRationals ns
 
 -- Bonus: same as rationals, but without repeats!
 rationals' :: InfiniteList Rational
