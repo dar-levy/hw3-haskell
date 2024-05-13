@@ -25,15 +25,15 @@ serialize (Tree left x right) = [x] ++ serialize left ++ serialize right
 
 deserialize :: [Int] -> Tree Int
 deserialize [] = Empty
-            deserialize list = fst (deserialize' list)
-                          where
-                            deserialize' :: [Int] -> (Tree Int, [Int])
-                            deserialize' (-1 : xs) = (Empty, xs)
-                            deserialize' (x : xs) =
-                              let (left, rest) = deserialize' xs
-                                  (right, rest') = deserialize' rest
-                              in (Tree left x right, rest')
-                            deserialize' [] = error "deserialize' called with an empty list"
+deserialize list = fst (deserialize' list)
+              where
+                deserialize' :: [Int] -> (Tree Int, [Int])
+                deserialize' (-1 : xs) = (Empty, xs)
+                deserialize' (x : xs) =
+                  let (left, rest) = deserialize' xs
+                      (right, rest') = deserialize' rest
+                  in (Tree left x right, rest')
+                deserialize' [] = error "deserialize' called with an empty list"
 
 -- Section 2: Infinite lists
 data InfiniteList a = a :> InfiniteList a
@@ -41,12 +41,16 @@ infixr 5 :>
 
 sample :: InfiniteList a -> [a]
 sample = take 10 . itoList
+
 itoList :: InfiniteList a -> [a]
-itoList = undefined
+itoList (x :> xs) = x : itoList xs
+
 iiterate :: (a -> a) -> a -> InfiniteList a
-iiterate = undefined
+iiterate f x = x :> iiterate f (f x)
+
 irepeat :: a -> InfiniteList a
-irepeat = undefined
+irepeat x = x :> irepeat x
+
 iprepend :: [a] -> InfiniteList a -> InfiniteList a
 iprepend = undefined
 itake :: Integer -> InfiniteList a -> [a]
