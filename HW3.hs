@@ -20,7 +20,9 @@ import Text.Read (readMaybe)
 -- Section 1: Tree Serialization
 data Tree a = Empty | Tree (Tree a) a (Tree a) deriving (Show, Eq)
 serialize :: Tree Int -> [Int]
-serialize = undefined
+serialize Empty = [-1]  -- Use -1 to indicate an Empty node
+serialize (Tree left x right) = [x] ++ serialize left ++ serialize right
+
 deserialize :: [Int] -> Tree Int
 deserialize = undefined
 
