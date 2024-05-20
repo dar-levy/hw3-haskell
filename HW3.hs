@@ -118,4 +118,76 @@ rationals' = rationals
 data StackError = DivisionByZero | StackUnderflow {instruction :: String, stackValue :: Maybe Int} deriving (Show, Eq)
 data RunError = InstructionError StackError | ParseError {line :: String} deriving (Show, Eq)
 parseAndRun :: String -> Either RunError [Int]
-parseAndRun = undefined
+parseAndRun s = parseAndRunAux (lines s) (Right [])
+
+parseAndRunAux :: [String] -> Either StackError [Int] -> Either RunError [Int]
+parseAndRunAux [] (Right stack) = Right stack
+parseAndRunAux _ (Left stack) = Left (InstructionError stack)
+parseAndRunAux (s : strs) (Right stack)
+
+ -- Empty line
+ | s == "\n" || s == "" = parseAndRunAux strs (Right stack)
+
+ -- Instrruction is not defined
+ -- | isNothing instruction = Left (ParseError s)
+ 
+ -- Check if the instruction is valid, if not, raise a ParseError
+ | otherwise = case instruction of
+    Just inst -> parseAndRunAux strs (runInstruction stack inst)
+    Nothing -> Left (ParseError s)
+ where instruction = parseInstructions s
+
+readInteger :: String -> Maybe Int
+readInteger = readMaybe
+
+-- for debugging
+data Instruction = Instruction {inst :: String, val :: Maybe Int} deriving (Show, Eq)
+--data Instruction = Instruction {inst :: String, val :: Maybe Int}
+
+parseInstructions :: String -> Maybe Instruction
+parseInstructions str = case words str of
+  ["POP"] -> Just (Instruction "POP" Nothing)
+  ["SWAP"] -> Just (Instruction "SWAP" Nothing)
+  ["DUP"] -> Just (Instruction "DUP" Nothing)
+  ["ADD"] -> Just (Instruction "ADD" Nothing)
+  ["SUB"] -> Just (Instruction "SUB" Nothing)
+  ["MUL"] -> Just (Instruction "MUL" Nothing)
+  ["DIV"] -> Just (Instruction "DIV" Nothing)
+  ("PUSH" : rest : _) -> case val of
+    Just _ -> Just (Instruction "PUSH" val)
+    Nothing -> Nothing
+    where val = readInteger rest
+  _ -> Nothing
+
+runInstruction :: [Int] -> Instruction -> Either StackError [Int]
+
+-- If we recieved Just in the value member of Instruction, then it must be a PUSH instruction, because this is the only instrction that has a value attached to it,
+-- And we already checked if the instruction is a valid one
+runInstruction stack (Instruction _ (Just val)) = Right (val : stack)
+
+-- If we have an empty stack, and got intruction other than PUSH (see above comment why is that), we raise an error
+runInstruction [] (Instruction inst Nothing) = Left (StackUnderflow inst Nothing)
+
+-- Got SWAP instruction, but there is only one element in the stack
+runInstruction [x] (Instruction "SWAP" Nothing) = Left (StackUnderflow "SWAP" (Just x))
+runInstruction (x : y: stack) (Instruction "SWAP" Nothing) = Right (y : x : stack)
+
+-- At least one element in the stack, and not SWAP or PUSH
+runInstruction (top : stack) (Instruction inst Nothing) = case inst of
+  "POP" -> Right stack
+  "DUP" -> Right (top : top : stack)
+  "ADD" -> runArithmaticInstructions "ADD" (+) (top : stack)
+  "SUB" -> runArithmaticInstructions "ADD" (-) (top : stack)
+  "MUL" -> runArithmaticInstructions "MUL" (*) (top : stack)
+  "DIV" -> runArithmaticInstructions "DIV" div (top : stack)
+  --"SWAP" -> runArithmaticInstructions "SWAP" (\x y -> [y, x]) (top : stack)
+
+  -- We should never get to this section, as we already checked if the instructions are valid and we covered all the instructions
+  _ -> Left (StackUnderflow inst (Just top))
+
+
+runArithmaticInstructions :: String -> (Int -> Int -> Int) -> [Int] -> Either StackError [Int]
+runArithmaticInstructions op _ [] = Left (StackUnderflow op Nothing)
+runArithmaticInstructions op _ [x] = Left (StackUnderflow op (Just x))
+runArithmaticInstructions "DIV" _ (_ : 0 : _) = Left DivisionByZero
+runArithmaticInstructions _ f (x : y : seq) = Right ((f x y) : seq)
