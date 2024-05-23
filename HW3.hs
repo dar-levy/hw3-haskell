@@ -120,29 +120,30 @@ data RunError = InstructionError StackError | ParseError {line :: String} derivi
 parseAndRun :: String -> Either RunError [Int]
 parseAndRun s = parseAndRunAux (lines s) (Right [])
 
+
 parseAndRunAux :: [String] -> Either StackError [Int] -> Either RunError [Int]
 parseAndRunAux [] (Right stack) = Right stack
-parseAndRunAux _ (Left stack) = Left (InstructionError stack)
-parseAndRunAux (s : strs) (Right stack)
+parseAndRunAux _ (Left err) = Left (InstructionError err)
+parseAndRunAux (str : strs) (Right stack)
 
  -- Empty line
- | s == "\n" || s == "" = parseAndRunAux strs (Right stack)
-
- -- Instrruction is not defined
- -- | isNothing instruction = Left (ParseError s)
+ | str == "\n" || str == "" = parseAndRunAux strs (Right stack)
  
  -- Check if the instruction is valid, if not, raise a ParseError
  | otherwise = case instruction of
     Just inst -> parseAndRunAux strs (runInstruction stack inst)
-    Nothing -> Left (ParseError s)
- where instruction = parseInstructions s
+    Nothing -> Left (ParseError str)
+ where instruction = parseInstructions str
+
 
 readInteger :: String -> Maybe Int
 readInteger = readMaybe
 
+
 -- for debugging
-data Instruction = Instruction {inst :: String, val :: Maybe Int} deriving (Show, Eq)
---data Instruction = Instruction {inst :: String, val :: Maybe Int}
+--data Instruction = Instruction {inst :: String, val :: Maybe Int} deriving (Show, Eq)
+data Instruction = Instruction {inst :: String, val :: Maybe Int}
+
 
 parseInstructions :: String -> Maybe Instruction
 parseInstructions str = case words str of
@@ -153,11 +154,12 @@ parseInstructions str = case words str of
   ["SUB"] -> Just (Instruction "SUB" Nothing)
   ["MUL"] -> Just (Instruction "MUL" Nothing)
   ["DIV"] -> Just (Instruction "DIV" Nothing)
-  ("PUSH" : rest : _) -> case val of
+  ("PUSH" : rest : []) -> case val of
     Just _ -> Just (Instruction "PUSH" val)
     Nothing -> Nothing
     where val = readInteger rest
   _ -> Nothing
+
 
 runInstruction :: [Int] -> Instruction -> Either StackError [Int]
 
@@ -170,24 +172,32 @@ runInstruction [] (Instruction inst Nothing) = Left (StackUnderflow inst Nothing
 
 -- Got SWAP instruction, but there is only one element in the stack
 runInstruction [x] (Instruction "SWAP" Nothing) = Left (StackUnderflow "SWAP" (Just x))
+
+-- At least two elements in the stack and got a SWAP instruction
 runInstruction (x : y: stack) (Instruction "SWAP" Nothing) = Right (y : x : stack)
 
 -- At least one element in the stack, and not SWAP or PUSH
 runInstruction (top : stack) (Instruction inst Nothing) = case inst of
   "POP" -> Right stack
   "DUP" -> Right (top : top : stack)
-  "ADD" -> runArithmaticInstructions "ADD" (+) (top : stack)
-  "SUB" -> runArithmaticInstructions "ADD" (-) (top : stack)
-  "MUL" -> runArithmaticInstructions "MUL" (*) (top : stack)
-  "DIV" -> runArithmaticInstructions "DIV" div (top : stack)
-  --"SWAP" -> runArithmaticInstructions "SWAP" (\x y -> [y, x]) (top : stack)
+  "ADD" -> runArithmeticInstructions "ADD" (+) (top : stack)
+  "SUB" -> runArithmeticInstructions "ADD" (-) (top : stack)
+  "MUL" -> runArithmeticInstructions "MUL" (*) (top : stack)
+  "DIV" -> runArithmeticInstructions "DIV" div (top : stack)
 
   -- We should never get to this section, as we already checked if the instructions are valid and we covered all the instructions
   _ -> Left (StackUnderflow inst (Just top))
 
 
-runArithmaticInstructions :: String -> (Int -> Int -> Int) -> [Int] -> Either StackError [Int]
-runArithmaticInstructions op _ [] = Left (StackUnderflow op Nothing)
-runArithmaticInstructions op _ [x] = Left (StackUnderflow op (Just x))
-runArithmaticInstructions "DIV" _ (_ : 0 : _) = Left DivisionByZero
-runArithmaticInstructions _ f (x : y : seq) = Right ((f x y) : seq)
+runArithmeticInstructions :: String -> (Int -> Int -> Int) -> [Int] -> Either StackError [Int]
+
+-- Trying to preform arithmetic operations on an empty stack (ehis should not be executed because we already tested for this case in the runIntruction function)
+runArithmeticInstructions op _ [] = Left (StackUnderflow op Nothing)
+
+-- Trying to preform arithmetic operations on a stack with one element only
+runArithmeticInstructions op _ [x] = Left (StackUnderflow op (Just x))
+
+-- Raising a DivisionByZero error in case of instruction trying to do division by zero
+runArithmeticInstructions "DIV" _ (_ : 0 : _) = Left DivisionByZero
+
+runArithmeticInstructions _ f (x : y : seq) = Right ((f x y) : seq)
